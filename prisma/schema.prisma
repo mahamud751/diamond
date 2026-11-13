@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  ROCKET
+  UPAY
+  BANK
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role     @default(MEMBER)
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  diamonds    Int
+  priceBdt    Int
+  priceUsd    Decimal  @db.Decimal(10, 2)
+  highlight   Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  description String?
+  orders      Order[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+  packageId     String
+  catalog       Package       @relation(fields: [packageId], references: [id])
+  packageName   String
+  diamonds      Int
+  quantity      Int           @default(1)
+  amountBdt     Int
+  amountUsd     Decimal       @db.Decimal(10, 2)
+  customerName  String
+  email         String
+  phone         String
+  recipientUid  String
+  paymentMethod PaymentMethod
+  senderNumber  String
+  transactionId String
+  note          String?
+  status        OrderStatus   @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  quote     String   @db.Text
+  rating    Int      @default(5)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Achievement {
+  id        String  @id @default(cuid())
+  value     String
+  title     String
+  detail    String
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model TeamMember {
+  id        String  @id @default(cuid())
+  name      String
+  title     String
+  highlight String
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model Service {
+  id        String  @id @default(cuid())
+  title     String
+  summary   String  @db.Text
+  icon      String  @default("diamond")
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  body        String   @db.Text
+  navLabel    String   @default("")
+  showInNav   Boolean  @default(false)
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id            String   @id @default("main")
+  brandName     String
+  tagline       String
+  heroKicker    String
+  heroTitle     String
+  heroBangla    String
+  heroSubtitle  String
+  introTitle    String
+  introBody     String   @db.Text
+  aboutTitle    String
+  aboutBody     String   @db.Text
+  mission       String   @db.Text
+  vision        String   @db.Text
+  packageTitle  String
+  packageIntro  String   @db.Text
+  phone         String
+  email         String
+  whatsapp      String
+  address       String
+  hours         String
+  bkash         String
+  nagad         String
+  rocket        String
+  upay          String
+  bankDetails   String   @db.Text
+  facebook      String   @default("")
+  instagram     String   @default("")
+  telegram      String   @default("")
+  heroImage     String   @default("")
+  updatedAt     DateTime @updatedAt
+}
