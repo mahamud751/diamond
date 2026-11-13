@@ -923,6 +923,26 @@ details[open] .faq-plus::after { transform: rotate(0deg); }
   .faq-list details p { padding: 0 18px 18px; }
   .nav-menu { grid-template-columns: 1fr; }
 }
+.password-field { position: relative; }
+.password-field input { padding-right: 48px; }
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #d6ccff;
+  cursor: pointer;
+}
+.password-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.password-toggle:hover { background: rgba(214, 204, 255, 0.12); }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }

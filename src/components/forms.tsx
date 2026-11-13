@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { changePassword, loginAction, signupAction, type AuthState, type PasswordState } from "@/actions/auth";
 import { applyToAgency, requestWithdrawal, sendMessage, type ContactState } from "@/actions/orders";
@@ -30,7 +30,11 @@ export function AuthForm({ mode, nextPath = "/account" }: { mode: "login" | "sig
         </Field>
       ) : null}
       <Field label="Password" hint={mode === "signup" ? "At least 8 characters." : undefined}>
-        <input name="password" type="password" required autoComplete={mode === "login" ? "current-password" : "new-password"} />
+        {mode === "login" ? (
+          <PasswordInput name="password" autoComplete="current-password" />
+        ) : (
+          <input name="password" type="password" required autoComplete="new-password" />
+        )}
       </Field>
       {mode === "signup" ? (
         <Field label="Confirm password">
@@ -203,6 +207,36 @@ export function WithdrawalForm({ prefill }: { prefill?: { name?: string; email?:
       </button>
       <p className="form-note">Nothing is paid automatically. Our team checks each request against your agency record first.</p>
     </form>
+  );
+}
+
+function PasswordInput({ name, autoComplete }: { name: string; autoComplete: string }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="password-field">
+      <input name={name} type={visible ? "text" : "password"} required autoComplete={autoComplete} />
+      <button
+        className="password-toggle"
+        type="button"
+        aria-pressed={visible}
+        aria-label={visible ? "Hide password" : "Show password"}
+        onClick={() => setVisible((value) => !value)}
+      >
+        {visible ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3l18 18" />
+            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+            <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.4" />
+            <path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10 10 0 0 0 4.1-.9" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        )}
+      </button>
+    </div>
   );
 }
 
