@@ -2,6 +2,7 @@ import Image from "next/image";
 import { removeMedia, saveSettings, uploadMedia } from "@/actions/admin";
 import { AdminForm } from "@/components/admin-form";
 import { Field } from "@/components/field";
+import { IconForm } from "@/components/row-actions";
 import { prisma } from "@/lib/prisma";
 
 export default async function SettingsAdmin() {
@@ -13,10 +14,25 @@ export default async function SettingsAdmin() {
 
   return (
     <>
-      <p className="kicker">House</p>
+      <p className="kicker">Setting</p>
       <h1>Words, numbers, and pictures.</h1>
       <div className="stack" style={{ marginTop: 18 }}>
-        <AdminForm action={saveSettings} submit="Save house">
+        <AdminForm action={saveSettings} submit="Save settings">
+          <fieldset className="fieldset stack">
+            <legend>Dollar rate</legend>
+            <Field label="1 USD in taka" hint="126 means 1 USD = ৳126. Every dollar price on the site is the taka price divided by this rate.">
+              <input name="usdRate" type="number" min={1} max={100000} step="0.01" defaultValue={Number(settings.usdRate)} required />
+            </Field>
+          </fieldset>
+          <fieldset className="fieldset stack">
+            <legend>Registration links</legend>
+            <Field label="Host registration link" hint="Opened when someone chooses host. Paste the full address.">
+              <input name="hostRegisterUrl" defaultValue={settings.hostRegisterUrl} placeholder="https://" />
+            </Field>
+            <Field label="Agent registration link" hint="Opened when someone chooses agent. Paste the full address.">
+              <input name="agentRegisterUrl" defaultValue={settings.agentRegisterUrl} placeholder="https://" />
+            </Field>
+          </fieldset>
           <fieldset className="fieldset stack">
             <legend>Hero</legend>
             <div className="grid-2">
@@ -27,7 +43,6 @@ export default async function SettingsAdmin() {
             <Field label="Hero title"><textarea name="heroTitle" defaultValue={settings.heroTitle} required /></Field>
             <Field label="Bangla line"><input name="heroBangla" defaultValue={settings.heroBangla} /></Field>
             <Field label="Hero subtitle"><textarea name="heroSubtitle" defaultValue={settings.heroSubtitle} /></Field>
-            <Field label="Hero image URL"><input name="heroImage" defaultValue={settings.heroImage} /></Field>
           </fieldset>
           <fieldset className="fieldset stack">
             <legend>Introduction and company</legend>
@@ -63,6 +78,9 @@ export default async function SettingsAdmin() {
               <Field label="Rocket"><input name="rocket" defaultValue={settings.rocket} /></Field>
               <Field label="Upay"><input name="upay" defaultValue={settings.upay} /></Field>
             </div>
+            <Field label="Order WhatsApp" hint="After a diamond order is placed, the member is sent to this chat. Use the country code, for example 8801300030915.">
+              <input name="orderWhatsapp" defaultValue={settings.orderWhatsapp} placeholder="8801300030915" />
+            </Field>
             <Field label="Bank details"><textarea name="bankDetails" defaultValue={settings.bankDetails} /></Field>
           </fieldset>
           <fieldset className="fieldset stack">
@@ -75,8 +93,9 @@ export default async function SettingsAdmin() {
 
         <section className="panel">
           <h2>Images</h2>
+          <p className="muted">Choose a picture from your device. Tick the box to use it as the hero portrait.</p>
           <AdminForm action={uploadMedia} submit="Upload" resetOnSuccess>
-            <Field label="Image"><input name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required /></Field>
+            <Field label="Image from your device"><input name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required /></Field>
             <Field label="Alt text"><input name="alt" /></Field>
             <label className="check"><input type="checkbox" name="asHero" defaultChecked /> Use as the hero portrait</label>
           </AdminForm>
@@ -85,11 +104,8 @@ export default async function SettingsAdmin() {
               <figure key={item.id}>
                 <Image src={item.url} alt={item.alt} width={280} height={180} unoptimized />
                 <figcaption>
-                  <span className="muted">{item.alt || item.url}</span>
-                  <form action={removeMedia}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <button className="btn btn-text" type="submit">Remove</button>
-                  </form>
+                  <span className="muted">{item.url === settings.heroImage ? "Hero portrait" : item.alt || "House image"}</span>
+                  <IconForm action={removeMedia} id={item.id} label="Delete image" icon="trash" tone="danger" />
                 </figcaption>
               </figure>
             ))}

@@ -11,11 +11,13 @@ const LINKS = [
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/packages", label: "Packages" },
   { href: "/admin/reviews", label: "Reviews" },
+  { href: "/admin/blog", label: "Blog" },
   { href: "/admin/team", label: "Team" },
   { href: "/admin/services", label: "Services" },
+  { href: "/admin/guides", label: "Work pages" },
   { href: "/admin/pages", label: "Pages" },
   { href: "/admin/messages", label: "Messages" },
-  { href: "/admin/settings", label: "House" },
+  { href: "/admin/settings", label: "Setting" },
 ];
 
 export function AdminShell({ name, children }: { name: string; children: ReactNode }) {

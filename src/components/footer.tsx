@@ -39,8 +39,9 @@ export function Footer({ house }: { house: HouseData }) {
           </div>
           <nav aria-label="Agency">
             <h2>Agency</h2>
-            <Link href="/agency">Join the agency</Link>
-            <Link href="/agency#paths">Host or agent</Link>
+            <Link href="/agency">For agency</Link>
+            <Link href="/host">Host</Link>
+            <Link href="/agent">Agent</Link>
             <Link href="/withdrawal">Withdrawal</Link>
             <Link href="/services">Services</Link>
           </nav>
@@ -64,6 +65,7 @@ export function Footer({ house }: { house: HouseData }) {
             © {new Date().getFullYear()} {settings.brandName}. Chamet is a trademark of its respective owner.
           </span>
           <span className="footer-pages">
+            <Link href="/blog">Blog</Link>
             <Link href="/about">About</Link>
             <Link href="/contact">Contact</Link>
             {pages.map((page) => (

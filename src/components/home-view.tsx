@@ -2,12 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { CrownScene } from "@/components/crest";
 import { FamilyScene } from "@/components/family-scene";
-import { ContactForm } from "@/components/forms";
+import { ContactForm, ReviewForm } from "@/components/forms";
 import { Arrow, Gem } from "@/components/gem";
 import { HomeFaq, HomePackages, RevealEffects } from "@/components/home-interactions";
 import { Icon, type IconName } from "@/components/icons";
 import { Mark } from "@/components/marks";
-import { waLink } from "@/lib/format";
+import { waLink, when } from "@/lib/format";
 import type { HouseData } from "@/lib/content";
 
 const QUICK: { href: string; icon: IconName; title: string; note: string }[] = [
@@ -36,7 +36,7 @@ export function splitMotto(value: string) {
 }
 
 export function HomeView({ house }: { house: HouseData }) {
-  const { settings, services, achievements, testimonials, team, packages } = house;
+  const { settings, services, achievements, testimonials, team, packages, posts, usdRate } = house;
   const json = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -188,8 +188,8 @@ export function HomeView({ house }: { house: HouseData }) {
               <li><Icon name="check" size={16} /> Guidance on streaming and house rules</li>
               <li><Icon name="check" size={16} /> Help with withdrawals when you need it</li>
             </ul>
-            <Link href="/agency?role=host#apply" className="btn btn-gold">
-              Apply as host <Arrow />
+            <Link href="/host" className="btn btn-gold">
+              How a host works <Arrow />
             </Link>
           </article>
           <article className="path-card is-gold">
@@ -202,8 +202,8 @@ export function HomeView({ house }: { house: HouseData }) {
               <li><Icon name="check" size={16} /> A direct line to the agency team</li>
               <li><Icon name="check" size={16} /> Growth that is shared, not competed for</li>
             </ul>
-            <Link href="/agency?role=agent#apply" className="btn btn-line">
-              Apply as agent <Arrow />
+            <Link href="/agent" className="btn btn-line">
+              How an agent works <Arrow />
             </Link>
           </article>
         </div>
@@ -223,7 +223,7 @@ export function HomeView({ house }: { house: HouseData }) {
               View all packages <Arrow diagonal />
             </Link>
           </div>
-          <HomePackages packages={packages} />
+          <HomePackages packages={packages} usdRate={usdRate} />
           <div className="pay-strip">
             <span>Pay your way</span>
             <b className="pay-bkash">bKash</b>
@@ -314,18 +314,17 @@ export function HomeView({ house }: { house: HouseData }) {
         </section>
       ) : null}
 
-      {testimonials.length ? (
-        <section className="band-light section" data-reveal>
-          <div className="shell">
-            <div className="head-row">
-              <div className="section-head">
-                <p className="kicker">Family voices</p>
-                <h2>
-                  Trusted by the people <em>we work with.</em>
-                </h2>
-              </div>
-              <span className="demo-label">Sample reviews · edit in admin</span>
+      <section className="band-light section" data-reveal>
+        <div className="shell">
+          <div className="head-row">
+            <div className="section-head">
+              <p className="kicker">Family voices</p>
+              <h2>
+                Trusted by the people <em>we work with.</em>
+              </h2>
             </div>
+          </div>
+          {testimonials.length ? (
             <div className="quote-grid">
               {testimonials.map((item) => (
                 <figure key={item.id} className="quote">
@@ -343,6 +342,34 @@ export function HomeView({ house }: { house: HouseData }) {
                 </figure>
               ))}
             </div>
+          ) : (
+            <p className="lede">Accepted notes from members will appear here.</p>
+          )}
+          <ReviewForm />
+        </div>
+      </section>
+
+      {posts.length ? (
+        <section className="shell section" data-reveal>
+          <div className="head-row">
+            <div className="section-head">
+              <p className="kicker">Blog</p>
+              <h2>
+                Notes from the <em>house desk.</em>
+              </h2>
+            </div>
+            <Link href="/blog" className="link-arrow">
+              All posts <Arrow diagonal />
+            </Link>
+          </div>
+          <div className="blog-grid">
+            {posts.map((post) => (
+              <Link key={post.slug} href={`/blog/${post.slug}`} className="blog-card">
+                <small>{when(post.createdAt)}</small>
+                <h2>{post.title}</h2>
+                <p>{post.excerpt}</p>
+              </Link>
+            ))}
           </div>
         </section>
       ) : null}
@@ -369,10 +396,10 @@ export function HomeView({ house }: { house: HouseData }) {
           <h2>
             Together we <em>grow stronger.</em>
           </h2>
-          <p>Join the family as a host or an agent — applying is free and takes two minutes.</p>
+          <p>Register as a host or an agent with the link the desk has set.</p>
           <div className="hero-actions">
-            <Link href="/agency#apply" className="btn btn-gold btn-lg">
-              Join our agency <Arrow />
+            <Link href="/agency" className="btn btn-gold btn-lg">
+              See how it works <Arrow />
             </Link>
             <a href={waLink(settings.whatsapp)} className="btn btn-glass btn-lg">
               <Icon name="chat" size={18} /> Chat on WhatsApp

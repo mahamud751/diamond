@@ -5,6 +5,7 @@ import { PackageDesk } from "@/components/package-desk";
 import { PageHero } from "@/components/page-hero";
 import { readSession } from "@/lib/auth";
 import { loadHouse } from "@/lib/content";
+import { rateLabel } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
     <>
       <PageHero kicker="Diamond store · open prices" title={house.settings.packageTitle}>
         <Prose text={house.settings.packageIntro} />
+        <p className="rate-note">Dollar prices follow the house rate: {rateLabel(house.usdRate)}.</p>
       </PageHero>
       <section className="shell section">
         <PackageDesk

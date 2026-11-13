@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { placeOrder, type OrderState } from "@/actions/orders";
 import { Field } from "@/components/field";
@@ -30,6 +30,14 @@ export function PackageDesk({
   const [state, action, pending] = useActionState<OrderState, FormData>(placeOrder, {});
   const current = useMemo(() => packages.find((item) => item.id === selected) ?? packages[0], [packages, selected]);
 
+  useEffect(() => {
+    if (!state.whatsapp) return;
+    const timer = window.setTimeout(() => {
+      window.location.assign(state.whatsapp!);
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [state.whatsapp]);
+
   if (!current) {
     return (
       <div className="panel empty">
@@ -52,9 +60,18 @@ export function PackageDesk({
         <p className="receipt-code">
           Order code <strong>{state.code}</strong>
         </p>
-        <p className="muted">Keep this code. Delivery starts once our team has verified the payment.</p>
+        <p className="muted">
+          {state.whatsapp
+            ? "Opening WhatsApp with this order so the desk can confirm it."
+            : "Keep this code. Delivery starts once our team has verified the payment."}
+        </p>
         <div className="hero-actions">
-          <Link className="btn btn-gold" href={`/track?code=${state.code}`}>
+          {state.whatsapp ? (
+            <a className="btn btn-gold" href={state.whatsapp}>
+              Open WhatsApp
+            </a>
+          ) : null}
+          <Link className={state.whatsapp ? "btn btn-glass" : "btn btn-gold"} href={`/track?code=${state.code}`}>
             Track this order
           </Link>
           <Link className="btn btn-glass" href="/account">

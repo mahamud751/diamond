@@ -20,7 +20,16 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <a className="skip" href="#content">
         Skip to content
       </a>
-      <Header brand={house.settings.brandName} pages={house.pages} session={session} />
+      <Header
+        brand={house.settings.brandName}
+        pages={house.pages}
+        workPages={house.workPages.map((item) => ({
+          key: item.key,
+          menuLabel: item.menuLabel,
+          title: item.title,
+        }))}
+        session={session}
+      />
       <main id="content">{children}</main>
       <Footer house={house} />
     </>

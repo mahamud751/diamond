@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { readSession } from "@/lib/auth";
+import { bdtToUsd, registerHref, usdRateOf } from "@/lib/format";
 import { slugify, text } from "@/lib/form";
 import { prisma } from "@/lib/prisma";
 
@@ -50,12 +51,12 @@ export async function savePackage(_prev: FormState, formData: FormData): Promise
   const name = text(formData, "name");
   const diamonds = integer(formData, "diamonds");
   const priceBdt = integer(formData, "priceBdt");
-  const priceUsd = Number(text(formData, "priceUsd"));
   const sortOrder = integer(formData, "sortOrder");
   if (!name) return { error: "Give the package a name." };
   if (!Number.isFinite(diamonds) || diamonds < 1) return { error: "Enter the diamond amount." };
   if (!Number.isFinite(priceBdt) || priceBdt < 1) return { error: "Enter the price in taka." };
-  if (!Number.isFinite(priceUsd) || priceUsd <= 0) return { error: "Enter the price in dollars." };
+  const settings = await prisma.siteSetting.findUnique({ where: { id: "main" } });
+  const priceUsd = bdtToUsd(priceBdt, usdRateOf(settings?.usdRate));
 
   const data = {
     name,
@@ -97,16 +98,18 @@ export async function saveTestimonial(_prev: FormState, formData: FormData): Pro
   const role = text(formData, "role");
   const rating = integer(formData, "rating");
   if (!name || !quote) return { error: "Name and quote are required." };
+  const active = flag(formData, "active");
   const data = {
     name,
     role: role || "Member",
     quote,
     rating: Number.isFinite(rating) ? Math.min(5, Math.max(1, rating)) : 5,
     sortOrder: integer(formData, "sortOrder") || 0,
-    active: flag(formData, "active"),
+    active,
+    status: active ? "APPROVED" as const : "HIDDEN" as const,
   };
   if (id) await prisma.testimonial.update({ where: { id }, data });
-  else await prisma.testimonial.create({ data });
+  else await prisma.testimonial.create({ data: { ...data, source: "ADMIN" } });
   refresh();
   return { ok: id ? "Review updated." : "Review added." };
 }
@@ -114,6 +117,17 @@ export async function saveTestimonial(_prev: FormState, formData: FormData): Pro
 export async function removeTestimonial(formData: FormData) {
   await requireAdmin();
   await prisma.testimonial.delete({ where: { id: text(formData, "id") } });
+  refresh();
+}
+
+export async function decideReview(formData: FormData) {
+  await requireAdmin();
+  const status = text(formData, "status");
+  if (status !== "APPROVED" && status !== "HIDDEN") return;
+  await prisma.testimonial.update({
+    where: { id: text(formData, "id") },
+    data: { status, active: status === "APPROVED" },
+  });
   refresh();
 }
 
@@ -189,6 +203,58 @@ export async function saveService(_prev: FormState, formData: FormData): Promise
   return { ok: id ? "Service updated." : "Service added." };
 }
 
+const WORK_PAGES = ["AGENCY", "HOST", "AGENT"] as const;
+
+export async function saveWorkPage(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const key = text(formData, "key");
+  const menuLabel = text(formData, "menuLabel");
+  const title = text(formData, "title");
+  const intro = text(formData, "intro");
+  if (!WORK_PAGES.includes(key as (typeof WORK_PAGES)[number])) return { error: "Choose a page." };
+  if (!menuLabel || !title || !intro) return { error: "Menu name, title, and introduction are required." };
+  const data = {
+    menuLabel,
+    kicker: text(formData, "kicker"),
+    title,
+    intro,
+    registerLabel: text(formData, "registerLabel") || "Register",
+  };
+  await prisma.workPage.upsert({
+    where: { key: key as "AGENCY" | "HOST" | "AGENT" },
+    update: data,
+    create: { key: key as "AGENCY" | "HOST" | "AGENT", ...data },
+  });
+  refresh();
+  return { ok: "Page updated." };
+}
+
+export async function saveGuide(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = text(formData, "id");
+  const title = text(formData, "title");
+  const body = text(formData, "body");
+  const page = text(formData, "page");
+  if (!title || !body) return { error: "Title and the direction are required." };
+  const data = {
+    title,
+    body,
+    page: WORK_PAGES.includes(page as (typeof WORK_PAGES)[number]) ? (page as "AGENCY" | "HOST" | "AGENT") : "AGENCY",
+    sortOrder: integer(formData, "sortOrder") || 0,
+    active: flag(formData, "active"),
+  };
+  if (id) await prisma.guide.update({ where: { id }, data });
+  else await prisma.guide.create({ data });
+  refresh();
+  return { ok: id ? "Direction updated." : "Direction added." };
+}
+
+export async function removeGuide(formData: FormData) {
+  await requireAdmin();
+  await prisma.guide.delete({ where: { id: text(formData, "id") } });
+  refresh();
+}
+
 export async function removeService(formData: FormData) {
   await requireAdmin();
   await prisma.service.delete({ where: { id: text(formData, "id") } });
@@ -225,6 +291,45 @@ export async function savePage(_prev: FormState, formData: FormData): Promise<Fo
 export async function removePage(formData: FormData) {
   await requireAdmin();
   await prisma.page.delete({ where: { id: text(formData, "id") } });
+  refresh();
+}
+
+export async function saveBlog(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = text(formData, "id");
+  const title = text(formData, "title");
+  const slug = slugify(text(formData, "slug") || title);
+  const excerpt = text(formData, "excerpt");
+  const body = text(formData, "body");
+  if (!title || !slug) return { error: "Title is required." };
+  if (!excerpt) return { error: "Add a short excerpt for the list." };
+  if (!body) return { error: "Write the blog post." };
+  const data = {
+    title,
+    slug,
+    excerpt,
+    body,
+    published: flag(formData, "published"),
+  };
+  const uploaded = await storeImage(formData.get("cover"));
+  if (uploaded && "error" in uploaded) return { error: uploaded.error };
+  let coverImage = text(formData, "currentCover");
+  if (flag(formData, "removeCover")) coverImage = "";
+  if (uploaded && "url" in uploaded) coverImage = uploaded.url;
+  Object.assign(data, { coverImage });
+  try {
+    if (id) await prisma.blogPost.update({ where: { id }, data });
+    else await prisma.blogPost.create({ data });
+  } catch {
+    return { error: "That slug is already in use." };
+  }
+  refresh();
+  return { ok: id ? "Blog updated." : "Blog added. It lives at /blog/" + slug };
+}
+
+export async function removeBlog(formData: FormData) {
+  await requireAdmin();
+  await prisma.blogPost.delete({ where: { id: text(formData, "id") } });
   refresh();
 }
 
@@ -265,6 +370,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
     phone: text(formData, "phone"),
     email: text(formData, "email"),
     whatsapp: text(formData, "whatsapp"),
+    orderWhatsapp: text(formData, "orderWhatsapp").replace(/[^\d+]/g, ""),
     address: text(formData, "address"),
     hours: text(formData, "hours"),
     bkash: text(formData, "bkash"),
@@ -275,8 +381,20 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
     facebook: text(formData, "facebook"),
     instagram: text(formData, "instagram"),
     telegram: text(formData, "telegram"),
-    heroImage: text(formData, "heroImage"),
+    hostRegisterUrl: registerHref(text(formData, "hostRegisterUrl")),
+    agentRegisterUrl: registerHref(text(formData, "agentRegisterUrl")),
   };
+  if (text(formData, "hostRegisterUrl") && !data.hostRegisterUrl) {
+    return { error: "The host registration link needs to be a web address." };
+  }
+  if (text(formData, "agentRegisterUrl") && !data.agentRegisterUrl) {
+    return { error: "The agent registration link needs to be a web address." };
+  }
+  const usdRate = Number(text(formData, "usdRate"));
+  if (!Number.isFinite(usdRate) || usdRate < 1 || usdRate > 100000) {
+    return { error: "Enter how many taka equal 1 USD. Example: 126." };
+  }
+  data.usdRate = usdRate;
   if (!data.brandName || !data.heroTitle || !data.email) {
     return { error: "Brand name, hero title, and email are required." };
   }
@@ -302,6 +420,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
       phone: String(data.phone),
       email: String(data.email),
       whatsapp: String(data.whatsapp),
+      orderWhatsapp: String(data.orderWhatsapp ?? ""),
       address: String(data.address),
       hours: String(data.hours),
       bkash: String(data.bkash),
@@ -312,11 +431,25 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
       facebook: String(data.facebook ?? ""),
       instagram: String(data.instagram ?? ""),
       telegram: String(data.telegram ?? ""),
-      heroImage: String(data.heroImage ?? ""),
+      heroImage: "",
+      usdRate,
+      hostRegisterUrl: String(data.hostRegisterUrl ?? ""),
+      agentRegisterUrl: String(data.agentRegisterUrl ?? ""),
     },
   });
+  const packages = await prisma.package.findMany({ select: { id: true, priceBdt: true } });
+  if (packages.length) {
+    await prisma.$transaction(
+      packages.map((item) =>
+        prisma.package.update({
+          where: { id: item.id },
+          data: { priceUsd: bdtToUsd(item.priceBdt, usdRate) },
+        }),
+      ),
+    );
+  }
   refresh();
-  return { ok: "House details saved." };
+  return { ok: "House details saved. Dollar prices now use this rate." };
 }
 
 const MIME: Record<string, string> = {
@@ -326,20 +459,24 @@ const MIME: Record<string, string> = {
   "image/gif": "gif",
 };
 
-export async function uploadMedia(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image." };
+async function storeImage(file: FormDataEntryValue | null): Promise<{ url: string } | { error: string } | null> {
+  if (!(file instanceof File) || file.size === 0) return null;
   if (file.size > 4_000_000) return { error: "Keep images under 4 MB." };
   const ext = MIME[file.type];
-  if (!ext) return { error: "Use a JPG, PNG, WEBP, or GIF." };
-
+  if (!ext) return { error: "Use a JPG, PNG, WEBP, or GIF from your device." };
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
   const filename = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}.${ext}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), bytes);
-  const url = `/uploads/${filename}`;
+  await writeFile(path.join(dir, filename), Buffer.from(await file.arrayBuffer()));
+  return { url: `/uploads/${filename}` };
+}
+
+export async function uploadMedia(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const stored = await storeImage(formData.get("file"));
+  if (!stored) return { error: "Choose an image from your device." };
+  if ("error" in stored) return { error: stored.error };
+  const url = stored.url;
   const alt = text(formData, "alt") || "House image";
   await prisma.media.create({ data: { url, alt } });
   if (flag(formData, "asHero")) {

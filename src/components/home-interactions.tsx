@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Gem, Arrow } from "@/components/gem";
-import { taka, usd } from "@/lib/format";
+import { rateLabel, taka, usd } from "@/lib/format";
 import type { PackageCard } from "@/lib/content";
 
 export function RevealEffects() {
@@ -39,7 +39,7 @@ const TABS = [
   ["premium", "Premium"],
 ] as const;
 
-export function HomePackages({ packages }: { packages: PackageCard[] }) {
+export function HomePackages({ packages, usdRate }: { packages: PackageCard[]; usdRate: number }) {
   const [category, setCategory] = useState<(typeof TABS)[number][0]>("popular");
   const filtered =
     category === "starter"
@@ -61,7 +61,7 @@ export function HomePackages({ packages }: { packages: PackageCard[] }) {
             </button>
           ))}
         </div>
-        <span className="tabs-note">Prices in BDT · delivered to your Chamet UID</span>
+        <span className="tabs-note">Prices in BDT · {rateLabel(usdRate)} · delivered to your Chamet UID</span>
       </div>
       <div className="pack-grid">
         {shown.map((item) => (
@@ -89,8 +89,8 @@ export function HomePackages({ packages }: { packages: PackageCard[] }) {
 }
 
 const faqs = [
-  ["How do I join the agency?", "Open the For Agency page and send the short application as a host or an agent. A team member reviews it and contacts you on the phone or WhatsApp number you gave."],
-  ["Does it cost anything to apply?", "No. Applying is free. Our team explains everything about how the agency works before you decide to start."],
+  ["How do I join the agency?", "Open Register and choose the host link or the agent link. Both addresses are set by the desk. A manager follows up after you register."],
+  ["Does it cost anything to join?", "Registration uses the link the desk publishes. Our team explains how going live, training, and customer care work before you start."],
   ["How do I buy Chamet diamonds?", "Choose a package in the Diamond Store, enter your Chamet UID and pay to the wallet shown. Submit your transaction ID and our team verifies the payment before delivering to your UID."],
   ["Which payment methods can I use?", "bKash, Nagad, Rocket, Upay and bank transfer. The payment details appear after you choose a method — always confirm them on the order form before sending money."],
   ["How do withdrawals work?", "Send a withdrawal request with your UID, the amount and where you want to be paid. Our team checks the request against your agency record and confirms with you before any payout."],

@@ -27,6 +27,23 @@ enum PaymentMethod {
   BANK
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum ReviewSource {
+  ADMIN
+  VISITOR
+}
+
+enum WorkPageKey {
+  AGENCY
+  HOST
+  AGENT
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -86,10 +103,13 @@ model Testimonial {
   name      String
   role      String
   quote     String   @db.Text
-  rating    Int      @default(5)
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  rating    Int          @default(5)
+  email     String?
+  status    ReviewStatus @default(APPROVED)
+  source    ReviewSource @default(ADMIN)
+  active    Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
 }
 
 model Achievement {
@@ -132,6 +152,36 @@ model Page {
   updatedAt   DateTime @updatedAt
 }
 
+model BlogPost {
+  id         String   @id @default(cuid())
+  title      String
+  slug       String   @unique
+  excerpt    String
+  body       String   @db.Text
+  coverImage String   @default("")
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model WorkPage {
+  key           WorkPageKey @id
+  menuLabel     String
+  kicker        String
+  title         String
+  intro         String      @db.Text
+  registerLabel String
+}
+
+model Guide {
+  id        String        @id @default(cuid())
+  title     String
+  body      String      @db.Text
+  page      WorkPageKey @default(AGENCY)
+  sortOrder Int         @default(0)
+  active    Boolean       @default(true)
+}
+
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String
@@ -169,6 +219,7 @@ model SiteSetting {
   phone         String
   email         String
   whatsapp      String
+  orderWhatsapp String   @default("")
   address       String
   hours         String
   bkash         String
@@ -180,5 +231,8 @@ model SiteSetting {
   instagram     String   @default("")
   telegram      String   @default("")
   heroImage     String   @default("")
+  usdRate          Decimal @default(126) @db.Decimal(10, 2)
+  hostRegisterUrl  String  @default("")
+  agentRegisterUrl String  @default("")
   updatedAt     DateTime @updatedAt
 }

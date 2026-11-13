@@ -13,6 +13,14 @@ export const orderSchema = z.object({
   note: z.string().trim().max(500).optional(),
 });
 
+export const reviewSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name.").max(80),
+  email: z.string().trim().email("Enter a valid email."),
+  role: z.string().trim().max(80).optional(),
+  quote: z.string().trim().min(10, "Write a short note.").max(600),
+  rating: z.coerce.number().int().min(1).max(5),
+});
+
 export const contactSchema = z.object({
   name: z.string().trim().min(2, "Enter your name.").max(80),
   email: z.string().trim().email("Enter a valid email."),
@@ -31,16 +39,6 @@ export const signupSchema = z.object({
   email: z.string().trim().email("Enter a valid email."),
   phone: z.string().trim().max(24).optional(),
   password: z.string().min(8, "Use at least 8 characters.").max(72),
-});
-
-export const agencySchema = z.object({
-  name: z.string().trim().min(2, "Enter your name.").max(80),
-  email: z.string().trim().email("Enter a valid email."),
-  phone: z.string().trim().min(8, "Enter a phone or WhatsApp number we can reach.").max(24),
-  role: z.enum(["HOST", "AGENT"], { message: "Choose host or agent." }),
-  uid: z.string().trim().max(40).optional(),
-  location: z.string().trim().min(2, "Tell us your city or country.").max(80),
-  about: z.string().trim().min(10, "Tell us a little about yourself.").max(1200),
 });
 
 export const withdrawalSchema = z.object({

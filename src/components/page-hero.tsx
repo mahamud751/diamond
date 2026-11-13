@@ -34,8 +34,8 @@ export function JoinBand({ whatsapp }: { whatsapp?: string }) {
         </h2>
         <p>Join the family as a host or an agent — applying is free and takes two minutes.</p>
         <div className="hero-actions">
-          <Link href="/agency#apply" className="btn btn-gold btn-lg">
-            Join our agency
+          <Link href="/signup" className="btn btn-gold btn-lg">
+            Register
           </Link>
           {whatsapp ? (
             <a href={whatsapp} className="btn btn-glass btn-lg">

@@ -8,16 +8,19 @@ import { Icon, type IconName } from "@/components/icons";
 import type { SessionUser } from "@/lib/session-token";
 
 type NavPage = { slug: string; title: string; navLabel: string; showInNav: boolean };
+type WorkNav = { key: "AGENCY" | "HOST" | "AGENT"; menuLabel: string; title: string };
 type Item = { href: string; label: string; note: string };
 type Group = { label: string; href: string; icon: IconName; match: string[]; items: Item[] };
 
 export function Header({
   brand,
   pages,
+  workPages,
   session,
 }: {
   brand: string;
   pages: NavPage[];
+  workPages: WorkNav[];
   session: SessionUser | null;
 }) {
   const pathname = usePathname();
@@ -40,16 +43,29 @@ export function Header({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const work = (key: WorkNav["key"]) => workPages.find((item) => item.key === key);
   const groups: Group[] = [
     {
-      label: "For Agency",
+      label: work("AGENCY")?.menuLabel || "For Agency",
       href: "/agency",
       icon: "crown",
-      match: ["/agency"],
+      match: ["/agency", "/host", "/agent"],
       items: [
-        { href: "/agency", label: "Join the agency", note: "How the family works" },
-        { href: "/agency#paths", label: "Host or agent", note: "Choose the path that fits you" },
-        { href: "/agency#apply", label: "Apply now", note: "A two-minute application" },
+        {
+          href: "/agency",
+          label: work("AGENCY")?.title || "How the family works",
+          note: "Read this before you register",
+        },
+        {
+          href: "/host",
+          label: work("HOST")?.menuLabel || "Host",
+          note: work("HOST")?.title || "How a host works",
+        },
+        {
+          href: "/agent",
+          label: work("AGENT")?.menuLabel || "Agent",
+          note: work("AGENT")?.title || "How an agent works",
+        },
       ],
     },
     {
@@ -76,8 +92,9 @@ export function Header({
       label: "About",
       href: "/about",
       icon: "info",
-      match: ["/about", "/services", "/contact", "/p/"],
+      match: ["/about", "/services", "/contact", "/blog", "/p/"],
       items: [
+        { href: "/blog", label: "Blog", note: "Notes from the house" },
         { href: "/about", label: "Our story", note: "Who is behind the name" },
         { href: "/services", label: "Services", note: "Everything we help with" },
         { href: "/contact", label: "Contact", note: "Phone, WhatsApp and email" },

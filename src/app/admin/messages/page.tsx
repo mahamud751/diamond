@@ -1,5 +1,6 @@
 import { markMessage, removeMessage } from "@/actions/admin";
 import { LiveBadge } from "@/components/live-badge";
+import { IconForm } from "@/components/row-actions";
 import { when } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -34,17 +35,17 @@ export default async function MessagesAdmin() {
                 </td>
                 <td>{when(item.createdAt)}</td>
                 <td><LiveBadge on={!item.read} onLabel="New" offLabel="Read" /></td>
-                <td>
+                <td className="action-cell">
                   <div className="row-actions">
-                    <form action={markMessage}>
-                      <input type="hidden" name="id" value={item.id} />
-                      {item.read ? null : <input type="hidden" name="read" value="on" />}
-                      <button className="btn btn-line" type="submit">{item.read ? "Mark unread" : "Mark read"}</button>
-                    </form>
-                    <form action={removeMessage}>
-                      <input type="hidden" name="id" value={item.id} />
-                      <button className="btn btn-text" type="submit">Remove</button>
-                    </form>
+                    <IconForm
+                      action={markMessage}
+                      id={item.id}
+                      fields={item.read ? undefined : { read: "on" }}
+                      label={item.read ? "Mark unread" : "Mark read"}
+                      icon={item.read ? "mail" : "check"}
+                      tone={item.read ? "line" : "good"}
+                    />
+                    <IconForm action={removeMessage} id={item.id} label="Delete" icon="trash" tone="danger" />
                   </div>
                 </td>
               </tr>

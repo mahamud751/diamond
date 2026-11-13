@@ -3,6 +3,7 @@ import { removeService, saveService } from "@/actions/admin";
 import { AdminForm } from "@/components/admin-form";
 import { Field } from "@/components/field";
 import { LiveBadge } from "@/components/live-badge";
+import { RowTools } from "@/components/row-actions";
 import { prisma } from "@/lib/prisma";
 
 const ICONS = ["diamond", "account", "desk", "profile", "shield", "globe"];
@@ -34,11 +35,7 @@ export default async function ServicesAdmin() {
                   <td>{item.icon}</td>
                   <td><LiveBadge on={item.active} /></td>
                   <td>#{String(item.sortOrder).padStart(2, "0")}</td>
-                  <td>
-                    <details className="row-editor">
-                      <summary>Edit</summary>
-                    </details>
-                  </td>
+                  <td className="action-cell"><RowTools id={item.id} remove={removeService} /></td>
                 </tr>
                 <tr className="editor-row">
                   <td colSpan={6}>
@@ -56,7 +53,6 @@ export default async function ServicesAdmin() {
                       </div>
                       <label className="check"><input type="checkbox" name="active" defaultChecked={item.active} /> Live</label>
                     </AdminForm>
-                    <form action={removeService}><input type="hidden" name="id" value={item.id} /><button className="btn btn-text" type="submit">Remove</button></form>
                   </td>
                 </tr>
               </Fragment>

@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { changePassword, loginAction, signupAction, type AuthState, type PasswordState } from "@/actions/auth";
-import { applyToAgency, requestWithdrawal, sendMessage, type ContactState } from "@/actions/orders";
+import { requestWithdrawal, sendMessage, submitReview, type ContactState } from "@/actions/orders";
 import { Icon } from "@/components/icons";
 import { PAYMENTS } from "@/lib/format";
 import { Field } from "@/components/field";
@@ -103,62 +103,6 @@ export function ContactForm() {
   );
 }
 
-export function AgencyForm({ prefill, role = "HOST" }: { prefill?: { name?: string; email?: string; phone?: string }; role?: "HOST" | "AGENT" }) {
-  const [state, action, pending] = useActionState<ContactState, FormData>(applyToAgency, {});
-  if (state.ok) return <Received title="Welcome — application received." body={state.ok} />;
-  return (
-    <form className="stack" action={action}>
-      <input className="hp" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-      <fieldset className="choice">
-        <legend>I want to join as</legend>
-        <label>
-          <input type="radio" name="role" value="HOST" defaultChecked={role === "HOST"} />
-          <span>
-            <Icon name="mic" size={20} />
-            <b>Host</b>
-            <small>I go live myself</small>
-          </span>
-        </label>
-        <label>
-          <input type="radio" name="role" value="AGENT" defaultChecked={role === "AGENT"} />
-          <span>
-            <Icon name="users" size={20} />
-            <b>Agent</b>
-            <small>I bring and guide hosts</small>
-          </span>
-        </label>
-      </fieldset>
-      <div className="grid-2">
-        <Field label="Full name">
-          <input name="name" required autoComplete="name" defaultValue={prefill?.name ?? ""} />
-        </Field>
-        <Field label="Phone / WhatsApp">
-          <input name="phone" required autoComplete="tel" defaultValue={prefill?.phone ?? ""} />
-        </Field>
-      </div>
-      <div className="grid-2">
-        <Field label="Email">
-          <input name="email" type="email" required autoComplete="email" defaultValue={prefill?.email ?? ""} />
-        </Field>
-        <Field label="City / country">
-          <input name="location" required />
-        </Field>
-      </div>
-      <Field label="Chamet UID" hint="Optional — leave empty if you do not have an account yet.">
-        <input name="uid" maxLength={40} autoComplete="off" />
-      </Field>
-      <Field label="About you" hint="Experience, languages, hours you can be online, or the size of your team.">
-        <textarea name="about" required minLength={10} maxLength={1200} />
-      </Field>
-      {state.error ? <p className="form-error" role="alert">{state.error}</p> : null}
-      <button className="btn btn-gold btn-block" disabled={pending}>
-        {pending ? "Sending…" : "Send application"}
-      </button>
-      <p className="form-note">Applying is free. A team member reviews every application personally.</p>
-    </form>
-  );
-}
-
 export function WithdrawalForm({ prefill }: { prefill?: { name?: string; email?: string; phone?: string } }) {
   const [state, action, pending] = useActionState<ContactState, FormData>(requestWithdrawal, {});
   if (state.ok) return <Received title="Request received." body={state.ok} />;
@@ -237,6 +181,53 @@ function PasswordInput({ name, autoComplete }: { name: string; autoComplete: str
         )}
       </button>
     </div>
+  );
+}
+
+export function ReviewForm() {
+  const [state, action, pending] = useActionState<ContactState, FormData>(submitReview, {});
+  if (state.ok) {
+    return (
+      <div className="panel review-compose">
+        <p className="form-ok" role="status">{state.ok}</p>
+      </div>
+    );
+  }
+  return (
+    <form className="panel stack review-compose" action={action}>
+      <h3>Leave a note</h3>
+      <p className="muted">It appears on the site after the desk accepts it. আপনার রিভিউ অ্যাডমিন গ্রহণ করলে সাইটে দেখা যাবে।</p>
+      <input className="hp" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+      <div className="grid-2">
+        <Field label="Name">
+          <input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="Your name" />
+        </Field>
+        <Field label="Email">
+          <input name="email" type="email" required autoComplete="email" placeholder="you@email.com" />
+        </Field>
+      </div>
+      <div className="grid-2">
+        <Field label="Place" hint="Optional. For example, Member, Dhaka.">
+          <input name="role" maxLength={80} placeholder="Member, Dhaka" />
+        </Field>
+        <Field label="Rating">
+          <select name="rating" defaultValue="5">
+            <option value="5">5 stars</option>
+            <option value="4">4 stars</option>
+            <option value="3">3 stars</option>
+            <option value="2">2 stars</option>
+            <option value="1">1 star</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Your note">
+        <textarea name="quote" required minLength={10} maxLength={600} placeholder="Write a short note about the family." />
+      </Field>
+      {state.error ? <p className="form-error" role="alert">{state.error}</p> : null}
+      <button className="btn btn-gold btn-block" disabled={pending}>
+        {pending ? "Sending…" : "Send note"}
+      </button>
+    </form>
   );
 }
 

@@ -23,7 +23,10 @@ export type IconName =
   | "phone"
   | "mail"
   | "pin"
-  | "spark";
+  | "spark"
+  | "pencil"
+  | "trash"
+  | "eye-off";
 
 const PATHS: Record<IconName, ReactNode> = {
   crown: <><path d="M3.5 8.5 8 12l4-6.5 4 6.5 4.5-3.5L19 18H5z" /><path d="M5 21h14" /></>,
@@ -49,6 +52,9 @@ const PATHS: Record<IconName, ReactNode> = {
   mail: <><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7 8 6.5L20 7" /></>,
   pin: <><path d="M12 21.5c4.5-4.3 7-7.8 7-11A7 7 0 0 0 5 10.5c0 3.2 2.5 6.7 7 11z" /><circle cx="12" cy="10.5" r="2.5" /></>,
   spark: <path d="M12 2.5c.6 5.4 3.1 7.9 9 9.5-5.9 1.6-8.4 4.1-9 9.5-.6-5.4-3.1-7.9-9-9.5 5.9-1.6 8.4-4.1 9-9.5z" />,
+  pencil: <><path d="M4 20h4l11-11-4-4L4 16z" /><path d="m13 5 4 4" /></>,
+  trash: <><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M7 7l1 13h8l1-13" /><path d="M10 11v6M14 11v6" /></>,
+  "eye-off": <><path d="M3 3l18 18" /><path d="M10.5 10.7A3 3 0 0 0 13.3 13.5" /><path d="M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2" /><path d="M6.1 6.1C3.5 7.8 2 12 2 12a18 18 0 0 0 6.2 5.5" /></>,
 };
 
 export function Icon({ name, size = 20, className }: { name: IconName; size?: number; className?: string }) {

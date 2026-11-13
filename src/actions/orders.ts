@@ -5,10 +5,10 @@ import { revalidatePath } from "next/cache";
 import { readSession } from "@/lib/auth";
 import { text } from "@/lib/form";
 import { prisma } from "@/lib/prisma";
-import { paymentLabel } from "@/lib/format";
-import { agencySchema, contactSchema, orderSchema, withdrawalSchema } from "@/lib/validators";
+import { bdtToUsd, paymentLabel, taka, usdRateOf, waOrderLink } from "@/lib/format";
+import { contactSchema, orderSchema, reviewSchema, withdrawalSchema } from "@/lib/validators";
 
-export type OrderState = { error?: string; code?: string; amount?: number; diamonds?: number };
+export type OrderState = { error?: string; code?: string; amount?: number; diamonds?: number; whatsapp?: string };
 export type ContactState = { error?: string; ok?: string };
 
 async function orderCode() {
@@ -43,6 +43,7 @@ export async function placeOrder(_prev: OrderState, formData: FormData): Promise
   if (!pkg) return { error: "That package is no longer on the desk." };
 
   const session = await readSession();
+  const settings = await prisma.siteSetting.findUnique({ where: { id: "main" } });
   const quantity = parsed.data.quantity;
   const order = await prisma.order.create({
     data: {
@@ -53,7 +54,7 @@ export async function placeOrder(_prev: OrderState, formData: FormData): Promise
       diamonds: pkg.diamonds * quantity,
       quantity,
       amountBdt: pkg.priceBdt * quantity,
-      amountUsd: Number(pkg.priceUsd) * quantity,
+      amountUsd: bdtToUsd(pkg.priceBdt * quantity, usdRateOf(settings?.usdRate)),
       customerName: parsed.data.customerName,
       email: parsed.data.email.toLowerCase(),
       phone: parsed.data.phone,
@@ -68,7 +69,19 @@ export async function placeOrder(_prev: OrderState, formData: FormData): Promise
   revalidatePath("/admin");
   revalidatePath("/admin/orders");
   revalidatePath("/account");
-  return { code: order.code, amount: order.amountBdt, diamonds: order.diamonds };
+  const desk = settings?.orderWhatsapp || settings?.whatsapp || "";
+  const whatsapp = waOrderLink(
+    desk,
+    [
+      `Diamond order ${order.code}`,
+      `${order.diamonds.toLocaleString("en-US")} diamonds`,
+      `Amount: ${taka(order.amountBdt)}`,
+      `UID: ${order.recipientUid}`,
+      `Paid by ${paymentLabel(order.paymentMethod)}`,
+      `Transaction: ${order.transactionId}`,
+    ].join("\n"),
+  );
+  return { code: order.code, amount: order.amountBdt, diamonds: order.diamonds, whatsapp };
 }
 
 export async function sendMessage(_prev: ContactState, formData: FormData): Promise<ContactState> {
@@ -99,42 +112,36 @@ export async function sendMessage(_prev: ContactState, formData: FormData): Prom
   return { ok: "Message received. The desk will reply." };
 }
 
-export async function applyToAgency(_prev: ContactState, formData: FormData): Promise<ContactState> {
-  const ok = "Application received. Our team will contact you on the number you gave.";
-  if (text(formData, "company")) return { ok };
+export async function submitReview(_prev: ContactState, formData: FormData): Promise<ContactState> {
+  if (text(formData, "company")) return { ok: "Thank you. Your note is with the desk." };
 
-  const parsed = agencySchema.safeParse({
+  const parsed = reviewSchema.safeParse({
     name: text(formData, "name"),
     email: text(formData, "email"),
-    phone: text(formData, "phone"),
     role: text(formData, "role"),
-    uid: text(formData, "uid"),
-    location: text(formData, "location"),
-    about: text(formData, "about"),
+    quote: text(formData, "quote"),
+    rating: text(formData, "rating"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Check the application." };
+    return { error: parsed.error.issues[0]?.message ?? "Check the note." };
   }
 
-  const data = parsed.data;
-  await prisma.contactMessage.create({
+  await prisma.testimonial.create({
     data: {
-      name: data.name,
-      email: data.email.toLowerCase(),
-      phone: data.phone,
-      subject: `Agency application — ${data.role === "HOST" ? "Host" : "Agent"}`,
-      message: [
-        `Applying as: ${data.role === "HOST" ? "Host" : "Agent"}`,
-        `Chamet UID: ${data.uid || "Not provided"}`,
-        `Location: ${data.location}`,
-        "",
-        data.about,
-      ].join("\n"),
+      name: parsed.data.name,
+      email: parsed.data.email.toLowerCase(),
+      role: parsed.data.role || "Member",
+      quote: parsed.data.quote,
+      rating: parsed.data.rating,
+      status: "PENDING",
+      source: "VISITOR",
+      active: false,
+      sortOrder: 100,
     },
   });
-  revalidatePath("/admin/messages");
+  revalidatePath("/admin/reviews");
   revalidatePath("/admin");
-  return { ok };
+  return { ok: "Thank you. Your note will appear on the site after the desk accepts it." };
 }
 
 export async function requestWithdrawal(_prev: ContactState, formData: FormData): Promise<ContactState> {

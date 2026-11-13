@@ -3,6 +3,7 @@ import { removePage, savePage } from "@/actions/admin";
 import { AdminForm } from "@/components/admin-form";
 import { Field } from "@/components/field";
 import { LiveBadge } from "@/components/live-badge";
+import { RowTools } from "@/components/row-actions";
 import { prisma } from "@/lib/prisma";
 
 export default async function PagesAdmin() {
@@ -36,7 +37,7 @@ export default async function PagesAdmin() {
                   <td><LiveBadge on={item.showInNav} onLabel="In header" offLabel="Hidden" /></td>
                   <td><LiveBadge on={item.published} onLabel="Published" offLabel="Draft" /></td>
                   <td>#{String(item.sortOrder).padStart(2, "0")}</td>
-                  <td><details className="row-editor"><summary>Edit</summary></details></td>
+                  <td className="action-cell"><RowTools id={item.id} remove={removePage} /></td>
                 </tr>
                 <tr className="editor-row">
                   <td colSpan={6}>
@@ -55,7 +56,6 @@ export default async function PagesAdmin() {
                       <label className="check"><input type="checkbox" name="showInNav" defaultChecked={item.showInNav} /> Header</label>
                       <label className="check"><input type="checkbox" name="published" defaultChecked={item.published} /> Published</label>
                     </AdminForm>
-                    <form action={removePage}><input type="hidden" name="id" value={item.id} /><button className="btn btn-text" type="submit">Remove</button></form>
                   </td>
                 </tr>
               </Fragment>

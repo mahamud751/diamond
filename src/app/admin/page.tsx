@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
-import { taka, when } from "@/lib/format";
+import { rateLabel, taka, usdRateOf, when } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminHome() {
-  const [orders, pending, packages, unread, members, recent, messages] = await Promise.all([
+  const [orders, pending, packages, unread, members, waitingReviews, settings, recent, messages] = await Promise.all([
     prisma.order.count(),
     prisma.order.count({ where: { status: "PENDING" } }),
     prisma.package.count({ where: { active: true } }),
     prisma.contactMessage.count({ where: { read: false } }),
     prisma.user.count({ where: { role: "MEMBER" } }),
+    prisma.testimonial.count({ where: { status: "PENDING" } }),
+    prisma.siteSetting.findUnique({ where: { id: "main" } }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     prisma.contactMessage.findMany({ where: { read: false }, orderBy: { createdAt: "desc" }, take: 4 }),
   ]);
@@ -20,12 +22,14 @@ export default async function AdminHome() {
     { label: "Live packages", value: packages },
     { label: "Unread notes", value: unread },
     { label: "Members", value: members },
+    { label: "Reviews waiting", value: waitingReviews },
   ];
 
   return (
     <>
       <p className="kicker">Overview</p>
       <h1>The desk today.</h1>
+      <p className="muted">House rate · {rateLabel(usdRateOf(settings?.usdRate))}. Change it in House settings.</p>
       <div className="metric-grid">
         {metrics.map((item) => (
           <article key={item.label} className="metric">

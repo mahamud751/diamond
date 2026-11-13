@@ -46,9 +46,10 @@ async function main() {
       id: "main",
       brandName: "Asian Top 10 Family",
       ...AGENCY_SETTINGS,
-      phone: "+880 1700 000 000",
+      phone: "+880 1300-030915",
       email: "desk@asiantop10.family",
-      whatsapp: "8801700000000",
+      whatsapp: "+880 1300-030915",
+      orderWhatsapp: "8801300030915",
       address: "House 10, Road 12, Gulshan, Dhaka",
       hours: "Every day, 10:00–02:00 BST",
       bkash: "01700 000 000",
@@ -60,6 +61,8 @@ async function main() {
       instagram: "",
       telegram: "",
       heroImage: "",
+      hostRegisterUrl: "https://wa.me/8801300030915?text=Hello%20Asian%20Top%2010%20Family%2C%20I%20want%20to%20register%20as%20a%20host.",
+      agentRegisterUrl: "https://wa.me/8801300030915?text=Hello%20Asian%20Top%2010%20Family%2C%20I%20want%20to%20register%20as%20an%20agent.",
     },
   });
 
@@ -178,6 +181,45 @@ async function main() {
         sortOrder: 2,
         body: "Trade accounts are opened by the desk, not by a button. Write with your name, the volume you expect, and the wallet you pay from.\n\nThe public packages stay the public price. A trade rate, when one is offered, is written back to you and does not change the card another member sees.",
       },
+    ],
+  });
+
+  await prisma.blogPost.createMany({
+    data: [
+      {
+        title: "Your first week as a host",
+        slug: "first-week-as-a-host",
+        excerpt: "What the desk walks a new host through before the first stream, and what a steady week looks like after that.",
+        coverImage: "/images/team-collaboration.jpg",
+        published: true,
+        createdAt: new Date("2026-11-02T10:00:00+06:00"),
+        body: "A new host does not go live alone. The first conversation is with a named manager, who checks the account, the house rules, and the hours you can actually keep.\n\nThe first week is about the room, not about a target. You learn how to start a stream, how to greet someone who stays, and who to message when the app or a payout does not look right.\n\nBy the end of that week you should know three things: when you go live, how a customer is treated in this family, and which person answers when you ask.",
+      },
+      {
+        title: "How a diamond order is checked",
+        slug: "how-a-diamond-order-is-checked",
+        excerpt: "The UID, the wallet, and the transaction ID are read by a person before any diamonds are placed.",
+        coverImage: "/images/workspace.jpg",
+        published: true,
+        createdAt: new Date("2026-11-06T16:30:00+06:00"),
+        body: "Every diamond order on this desk follows the same path. You choose a package, write the Chamet UID that should receive it, and pay the number shown for bKash, Nagad, Rocket, Upay, or the bank.\n\nThe price on the card is the price in taka. The dollar line is that amount divided by the rate set in the house settings.\n\nNothing is placed until the transaction ID matches a payment the desk can see. If the UID is unclear, the team writes back before moving the order. Delivered means the value was placed on the UID you wrote.",
+      },
+      {
+        title: "What an agent does in the family",
+        slug: "what-an-agent-does",
+        excerpt: "An agent brings hosts in, stays beside them, and keeps one line open to the agency desk.",
+        coverImage: "",
+        published: true,
+        createdAt: new Date("2026-11-10T12:00:00+06:00"),
+        body: "An agent is not a second brand. You bring your own hosts under Asian Top 10 Family and you stay the person they ask first.\n\nA normal day is a short list: who is ready to go live, who needs the house rules again, and which question should come to the desk instead of being guessed.\n\nThe family gives you the structure and a partner. You give the hosts a steady hand. Registration for that seat is the agent link the desk publishes.",
+      },
+    ],
+  });
+
+  await prisma.media.createMany({
+    data: [
+      { url: "/images/team-collaboration.jpg", alt: "The desk working through the day" },
+      { url: "/images/workspace.jpg", alt: "The house workspace" },
     ],
   });
 
